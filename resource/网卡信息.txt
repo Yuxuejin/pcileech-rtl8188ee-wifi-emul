@@ -1,0 +1,39 @@
+parameter         CFG_VEND_ID        = 16'h10EC,
+parameter         CFG_DEV_ID         = 16'h8168,
+parameter         CFG_REV_ID         =  8'h15,
+parameter         CFG_SUBSYS_VEND_ID = 16'h17AA,
+parameter         CFG_SUBSYS_ID      = 16'h390B,
+
+
+parameter [31:0]  BAR0 = 32'hFFFFFF01,
+parameter [31:0]  BAR1 = 32'h00000000,
+parameter [31:0]  BAR2 = 32'hFFFFF004,
+parameter [31:0]  BAR3 = 32'hFFFC0004,
+parameter [31:0]  BAR4 = 32'h00000000,
+parameter [31:0]  BAR5 = 32'h00000000,
+
+
+
+
+Vendor ID 10EC
+Device ID 8168
+Command 0407
+Class Code 020000
+Revision 15
+Status 10
+Subsystem Vendor ID 17AA
+Subsystem ID 390B
+
+BAR0 = FFFFFF00
+BAR1 = 00000000
+BAR2 = FFFFF004
+BAR3 = FFFC0004
+BAR4 = 00000000
+BAR5 = 00000000
+
+Max_Payload_Size Supported  000
+
+
+PCI Express Device Serial Number (1st DW) 684CE000
+PCI Express Device Serial Number (2nd DW) 01000000
+2 + 1 = 01000000684CE000
