@@ -59,7 +59,7 @@ module pcie_7x_0_core_top # (
   parameter [7:0]   MSI_CAP_NEXTPTR = 8'h70,
 
   //MSIX CAP
-  parameter         MSIX_CAP_ON = "TRUE",
+  parameter         MSIX_CAP_ON = "FALSE",
   parameter [7:0]   MSIX_BASE_PTR = 8'hB0,
   parameter [7:0]   MSIX_CAP_NEXTPTR =88'h00,
 
