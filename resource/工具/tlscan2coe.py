@@ -19,7 +19,12 @@ import xml.etree.ElementTree
 
 assert len(sys.argv) >= 2, 'Missing argument'
 src_path = os.path.normpath(sys.argv[1])
-dst_path = os.path.normpath(os.path.expanduser("~/Desktop") + "/output.coe")
+
+# 修改这里，使用命令行参数作为输出路径，如果没有提供则使用相对路径
+if len(sys.argv) >= 3:
+    dst_path = os.path.normpath(sys.argv[2])
+else:
+    dst_path = os.path.normpath("output.coe")  # 默认输出到当前目录
 
 # Load and parse the XML format '.tlscan' file
 bs = xml.etree.ElementTree.parse(str(src_path)).find('.//bytes').text
@@ -40,3 +45,5 @@ with open(dst_path, 'w') as fp:
             bs = bs[32:]
 
     fp.write(';\n')
+    
+    print(f"成功创建文件: {dst_path}")

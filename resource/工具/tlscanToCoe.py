@@ -1,7 +1,24 @@
-import re
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+融合脚本：将TeleScan PE PCIE配置空间'.tlscan'文件转换为Vivado'.coe'文件和写掩码文件
+
+用法:
+    python tlscanToCoe.py <tlscan文件> <输出配置空间coe文件> <输出写掩码coe文件>
+
+示例:
+    python tlscanToCoe.py AX200.tlscan pcileech_cfgspace.coe pcileech_cfgspace_writemask.coe
+    python tlscanToCoe.py ../AX200/AX200.tlscan ../AX200/pcileech_cfgspace.coe ../AX200/pcileech_cfgspace_writemask.coe
+"""
+
+import os
 import sys
+import datetime
+import xml.etree.ElementTree as ET
+import re
 
-
+# 写掩码部分的常量定义
 write_protected_bits_PCIE = (
     "00000000",  # 1
     "00000000",  # 2
@@ -161,7 +178,8 @@ write_protected_bits_PTM = (
     "00000000",  # 3
     "03ff0000",  # 4
 )
-write_protected_bits_VC =(
+
+write_protected_bits_VC = (
     "00000000",  # 1
     "00000000",  # 2
     "00000000",  # 3
@@ -169,7 +187,14 @@ write_protected_bits_VC =(
     "00000000",  # 5
     "FF000F87",  # 6
     "00000000",  # 7
-	)
+)
+
+fixed_section = [
+    "00000000", "470500f9", "00000000", "ffff0040",
+    "f0ffffff", "ffffffff", "f0ffffff", "ffffffff",
+    "f0ffffff", "f0ffffff", "00000000", "00000000",
+    "01f8ffff", "00000000", "00000000", "ff000000",
+]
 
 CAPABILITY_NAMES = {
     0x01: "power management",
@@ -242,13 +267,6 @@ EXTENDED_CAPABILITY_NAMES = {
     0x002C: "system firmware intermediary",
 }
 
-fixed_section = [
-    "00000000", "470500f9", "00000000", "ffff0040",
-    "f0ffffff", "ffffffff", "f0ffffff", "ffffffff",
-    "f0ffffff", "f0ffffff", "00000000", "00000000",
-    "01f8ffff", "00000000", "00000000", "ff000000",
-]
-
 writemask_dict = {
     "0x10": write_protected_bits_PCIE,
     "0x03": write_protected_bits_VPD,
@@ -274,9 +292,10 @@ writemask_dict = {
 }
 
 def get_user_choice(cap_id):
+    """根据能力ID选择合适的写掩码变体"""
     msi_choices = {
         '1': write_protected_bits_MSI_ENABLED_0,
-	'2': write_protected_bits_MSI_Multiple_Message_enabled_1,
+        '2': write_protected_bits_MSI_Multiple_Message_enabled_1,
         '3': write_protected_bits_MSI_64_bit_1,
         '4': write_protected_bits_MSI_Multiple_Message_Capable_1
     }
@@ -291,43 +310,38 @@ def get_user_choice(cap_id):
     }
     
     if cap_id == 0x05:
-        print("\nChoose MSI writemask variation:")
+        print("\n选择MSI写掩码变体:")
         print("1. MSI length: 1")
         print("2. MSI length: 3")
         print("3. MSI length: 4")
         print("4. MSI length: 6")
-        choice = input("\nEnter choice (1/2/3/4): ")
-        return msi_choices.get(choice)
+        choice = input("\n请输入选择 (1/2/3/4): ")
+        return msi_choices.get(choice, write_protected_bits_MSI_ENABLED_0)
     
     if cap_id == 0x11:
-        print("\nChoose MSIX writemask variation:")
+        print("\n选择MSIX写掩码变体:")
         print("1. MSIX length: 3")
         print("2. MSIX length: 4")
         print("3. MSIX length: 5")
         print("4. MSIX length: 6")
         print("5. MSIX length: 7")
         print("6. MSIX length: 8")
-        choice = input("\nEnter choice (1/2/3/4/5/6): ")
-        return msix_choices.get(choice)
+        choice = input("\n请输入选择 (1/2/3/4/5/6): ")
+        return msix_choices.get(choice, write_protected_bits_MSIX_3)
     
     return None
 
-def read_cfg_space(file_path):
+def read_cfg_space(dwords):
+    """从DWORD列表创建配置空间字典"""
     dword_map = {}
-    index = 0
-    with open(file_path, 'r') as file:
-        for line in file:
-            dwords = re.findall(r'[0-9a-fA-F]{8}', line.strip())
-            for dword in dwords:
-                if dword and index < 1024:
-                    dword_map[index] = int(dword, 16)
-                    index += 1
+    for i, dword in enumerate(dwords):
+        dword_map[i] = dword
     return dword_map
 
-
 def locate_caps(dword_map):
+    """定位配置空间中的能力指针"""
     capabilities = {}
-    start = dword_map[0x34 // 4] >> 24
+    start = (dword_map[0x34 // 4] >> 24) & 0xFF
     cap_location = start
 
     while cap_location != 0:
@@ -336,43 +350,53 @@ def locate_caps(dword_map):
         next_cap = (cap_dword >> 16) & 0xFF
         cap_name = CAPABILITY_NAMES.get(cap_id, "Capability Pointer")
         if cap_location == start:
-            print("Found Capabilities:")
+            print("找到的能力:")
         print(f"{hex(cap_location):<3}: {cap_name}")
         if next_cap == 0:
             print("-" * 40)
         capabilities[f"0x{cap_id:02X}"] = cap_location
         cap_location = next_cap
 
-
     ext_cap_location = 0x100
-    while ext_cap_location != 0:
+    while ext_cap_location < len(dword_map) * 4:
+        if ext_cap_location // 4 not in dword_map:
+            break
+            
         ext_cap_dword = dword_map[ext_cap_location // 4]
-
-        ext_cap_dword_le = int.from_bytes(ext_cap_dword.to_bytes(4, byteorder='big'), byteorder='little')
-        ext_cap_id = ext_cap_dword_le & 0xFFFF
-        next_ext_cap = (ext_cap_dword_le >> 20) & 0xFFF
+        # 转换为小端格式
+        ext_cap_dword_bytes = ext_cap_dword.to_bytes(4, byteorder='little')
+        ext_cap_id = int.from_bytes(ext_cap_dword_bytes[0:2], byteorder='little')
+        next_ext_cap = (int.from_bytes(ext_cap_dword_bytes[2:4], byteorder='little') >> 4) & 0xFFF
+        
         ext_cap_name = EXTENDED_CAPABILITY_NAMES.get(ext_cap_id, "Unknown")
         if ext_cap_location == 0x100:
-            print(f"Found Extended Capabilities:")
+            print(f"找到的扩展能力:")
             print(f"{hex(ext_cap_location):<3}: {ext_cap_name}")
         capabilities[f"0x{ext_cap_id:04X}"] = ext_cap_location
+        
+        if next_ext_cap == 0:
+            break
         ext_cap_location = next_ext_cap
 
     return capabilities
 
-
 def create_wrmask(dwords):
-    return ['ffffffff' for _ in dwords]
+    """创建写掩码"""
+    return ['ffffffff' for _ in range(len(dwords))]
 
-
-def update_writemask(wr_mask, input, start_index):
-    end_index = min(start_index + len(input), len(wr_mask))
-    wr_mask[start_index:end_index] = input[:end_index - start_index]
+def update_writemask(wr_mask, input_mask, start_index):
+    """更新写掩码"""
+    end_index = min(start_index + len(input_mask), len(wr_mask))
+    wr_mask[start_index:end_index] = input_mask[:end_index - start_index]
     return wr_mask
 
+def hex_string_to_int(hex_str):
+    """将十六进制字符串转换为整数"""
+    return int(hex_str, 16)
 
-def main(file_in, file_out):
-    cfg_space = read_cfg_space(file_in)
+def create_writemask_file(dwords, output_file):
+    """创建写掩码文件"""
+    cfg_space = read_cfg_space(dwords)
     caps = locate_caps(cfg_space)
 
     wr_mask = create_wrmask(cfg_space)
@@ -387,18 +411,83 @@ def main(file_in, file_out):
         cap_start_index = cap_start // 4
         wr_mask = update_writemask(wr_mask, section, cap_start_index)
 
-    with open(file_out, 'w') as f:
-        f.write("; 配置空间写掩码文件\n")
+    with open(output_file, 'w') as f:
+        # f.write("; 配置空间写掩码文件\n")
         f.write("memory_initialization_radix=16;\nmemory_initialization_vector=\n\n")
         for i in range(0, len(wr_mask), 4):
-            f.write(','.join(wr_mask[i:i + 4]) + ',\n')
+            end = min(i + 4, len(wr_mask))
+            f.write(','.join(wr_mask[i:end]) + ',\n')
     
-    print(f"成功创建文件: {file_out}")
+    print(f"成功创建写掩码文件: {output_file}")
 
+def main():
+    """主函数"""
+    # 检查命令行参数
+    if len(sys.argv) < 4:
+        print("用法: python tlscan2coe_combined.py <tlscan文件> <输出配置空间coe文件> <输出写掩码coe文件>")
+        sys.exit(1)
+    
+    src_path = os.path.normpath(sys.argv[1])
+    dst_coe_path = os.path.normpath(sys.argv[2])
+    dst_writemask_path = os.path.normpath(sys.argv[3])
+    
+    try:
+        # 解析XML文件
+        tree = ET.parse(src_path)
+        root = tree.getroot()
+        
+        # 获取bytes元素的文本内容
+        bs_element = root.find('.//bytes')
+        if bs_element is None:
+            print("错误: 无法在文件中找到bytes元素")
+            sys.exit(1)
+        
+        bs_text = bs_element.text
+        
+        # 移除所有空白字符
+        bs = ''.join(bs_text.split())
+        
+        # 检查长度
+        if len(bs) != 8192:
+            print(f"警告: 预期8192个字符(4096个十六进制字节)，实际得到{len(bs)}个字符")
+        
+        # 将十六进制字符串转换为DWORD列表
+        dwords = []
+        for i in range(0, len(bs), 8):
+            if i + 8 <= len(bs):
+                # 每个DWORD是4个字节(8个十六进制字符)
+                byte_str = bs[i:i+8]
+                # 转换为小端格式
+                dword_le = byte_str[6:8] + byte_str[4:6] + byte_str[2:4] + byte_str[0:2]
+                dwords.append(hex_string_to_int(dword_le))
+        
+        # 写入配置空间COE文件
+        with open(dst_coe_path, 'w') as fp:
+            # fp.write(f"; 从\"{src_path}\"转换为COE，时间: {datetime.datetime.now()}\n")
+            fp.write("memory_initialization_radix=16;\nmemory_initialization_vector=\n\n")
+            
+            for y in range(16):
+                fp.write(f"; {(y * 256):04X}\n")
+                
+                for x in range(16):
+                    if y * 16 + x < len(dwords) // 4:
+                        idx = (y * 16 + x) * 4
+                        dw1 = format(dwords[idx], '08x') if idx < len(dwords) else "00000000"
+                        dw2 = format(dwords[idx+1], '08x') if idx+1 < len(dwords) else "00000000"
+                        dw3 = format(dwords[idx+2], '08x') if idx+2 < len(dwords) else "00000000"
+                        dw4 = format(dwords[idx+3], '08x') if idx+3 < len(dwords) else "00000000"
+                        fp.write(f"{dw1},{dw2},{dw3},{dw4},\n")
+            
+            fp.write(";\n")
+        
+        print(f"成功创建配置空间文件: {dst_coe_path}")
+        
+        # 创建写掩码文件
+        create_writemask_file(dwords, dst_writemask_path)
+        
+    except Exception as e:
+        print(f"错误: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
-    if len(sys.argv) >= 3:
-        main(sys.argv[1], sys.argv[2])
-    else:
-        print("用法: python WritemaskerTM.py <输入COE文件> <输出掩码COE文件>")
-        main('pcileech_cfgspace.coe', 'pcileech_cfgspace_writemask.coe')
+    main()
