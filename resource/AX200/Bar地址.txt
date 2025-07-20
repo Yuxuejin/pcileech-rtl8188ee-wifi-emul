@@ -1,0 +1,3 @@
+原始：Base Address Register 0 F64FC004
+
+Base Address Register 0 FFFFC004
