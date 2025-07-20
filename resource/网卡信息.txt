@@ -8,8 +8,8 @@ parameter         CFG_SUBSYS_ID      = 16'h390B,
 parameter [31:0]  BAR0 = 32'hFFFFFF01,
 parameter [31:0]  BAR1 = 32'h00000000,
 parameter [31:0]  BAR2 = 32'hFFFFF004,
-parameter [31:0]  BAR3 = 32'hFFFC0004,
-parameter [31:0]  BAR4 = 32'h00000000,
+parameter [31:0]  BAR3 = 32'h00000000,
+parameter [31:0]  BAR4 = 32'hFFFC0004,
 parameter [31:0]  BAR5 = 32'h00000000,
 
 
