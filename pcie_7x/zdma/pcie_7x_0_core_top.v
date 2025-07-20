@@ -64,11 +64,11 @@
 VC0_TX_LASTPACKET=29,VC0_RX_RAM_LIMIT=7FF,VC0_TOTAL_CREDITS_PH=4,VC0_TOTAL_CREDITS_PD=64,VC0_TOTAL_CREDITS_NPH=4,VC0_TOTAL_CREDITS_NPD=8,VC0_TOTAL_CREDITS_CH=72,VC0_TOTAL_CREDITS_CD=850,VC0_CPL_INFINITE=TRUE,DEV_CAP_PHANTOM_FUNCTIONS_SUPPORT=0,DEV_CAP_EXT_TAG_SUPPORTED=TRUE,LINK_STATUS_SLOT_CLOCK_CONFIG=TRUE,DISABLE_LANE_REVERSAL=FALSE,DISABLE_SCRAMBLING=FALSE,DSN_CAP_ON=TRUE,REVISION_ID=02,VC_CAP_ON=FALSE}" *)
 (* DowngradeIPIdentifiedWarnings = "yes" *)
 module pcie_7x_0_core_top # (
-  parameter         CFG_VEND_ID        = 16'h168C,
-  parameter         CFG_DEV_ID         = 16'h002E,
-  parameter         CFG_REV_ID         =  8'h01,
-  parameter         CFG_SUBSYS_VEND_ID = 16'h168C,
-  parameter         CFG_SUBSYS_ID      = 16'h30A4,
+  parameter         CFG_VEND_ID        = 16'h10EC,
+  parameter         CFG_DEV_ID         = 16'h8125,
+  parameter         CFG_REV_ID         =  8'h05,
+  parameter         CFG_SUBSYS_VEND_ID = 16'h1458,
+  parameter         CFG_SUBSYS_ID      = 16'hE000,
   parameter         PCIE_ID_IF         ="TRUE", 
 
   parameter         EXT_PIPE_SIM = "FALSE",
@@ -279,7 +279,7 @@ module pcie_7x_0_core_top # (
 
   parameter [7:0]   MSI_BASE_PTR = 8'h50,
   parameter [7:0]   MSI_CAP_ID = 8'h05,
-  parameter [7:0]   MSI_CAP_NEXTPTR = 8'h60,
+  parameter [7:0]   MSI_CAP_NEXTPTR = 8'h70,
   parameter [7:0]   MSIX_BASE_PTR = 8'h9C,
   parameter [7:0]   MSIX_CAP_ID = 8'h11,
   parameter [7:0]   MSIX_CAP_NEXTPTR =8'h00,
@@ -289,7 +289,7 @@ module pcie_7x_0_core_top # (
   parameter         N_FTS_GEN1 = 255,
   parameter         N_FTS_GEN2 = 255,
 
-  parameter [7:0]   PCIE_BASE_PTR = 8'h60,
+  parameter [7:0]   PCIE_BASE_PTR = 8'h70,
   parameter [7:0]   PCIE_CAP_CAPABILITY_ID = 8'h10,
   parameter [3:0]   PCIE_CAP_CAPABILITY_VERSION = 4'h2,
   parameter         PCIE_CAP_ON = "TRUE",
