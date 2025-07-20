@@ -288,11 +288,11 @@ module pcileech_fifo #(
             rw[127:96]  <= 0;                           // +00C: cmd_send_count [little-endian]
             // PCIE INITIAL CONFIG (SPECIAL BITSTREAM)
             // NB! "initial" CLK0 values may also be changed in: '_pcie_core_config = {...};' [important on PCIeScreamer].
-            rw[143:128] <= 16'h10EE;                    // +010: CFG_SUBSYS_VEND_ID (NOT IMPLEMENTED)
-            rw[159:144] <= 16'h0007;                    // +012: CFG_SUBSYS_ID      (NOT IMPLEMENTED)
-            rw[175:160] <= 16'h10EE;                    // +014: CFG_VEND_ID        (NOT IMPLEMENTED)
-            rw[191:176] <= 16'h0666;                    // +016: CFG_DEV_ID         (NOT IMPLEMENTED)
-            rw[199:192] <= 8'h02;                       // +018: CFG_REV_ID         (NOT IMPLEMENTED)
+            rw[143:128] <= 16'h17AA;                    // +010: CFG_SUBSYS_VEND_ID (NOT IMPLEMENTED)
+            rw[159:144] <= 16'h390B;                    // +012: CFG_SUBSYS_ID      (NOT IMPLEMENTED)
+            rw[175:160] <= 16'h10EC;                    // +014: CFG_VEND_ID        (NOT IMPLEMENTED)
+            rw[191:176] <= 16'h8168;                    // +016: CFG_DEV_ID         (NOT IMPLEMENTED)
+            rw[199:192] <= 8'h15;                       // +018: CFG_REV_ID         (NOT IMPLEMENTED)
             rw[200]     <= 1'b1;                        // +019: PCIE CORE RESET
             rw[201]     <= 1'b0;                        //       PCIE SUBSYSTEM RESET
             rw[202]     <= 1'b1;                        //       CFGTLP PROCESSING ENABLE

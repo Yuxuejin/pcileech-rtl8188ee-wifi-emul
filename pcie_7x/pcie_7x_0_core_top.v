@@ -6,17 +6,17 @@ VC0_TX_LASTPACKET=29,VC0_RX_RAM_LIMIT=7FF,VC0_TOTAL_CREDITS_PH=4,VC0_TOTAL_CREDI
 module pcie_7x_0_core_top # (
 
   //CFG SPACE key parameters
-  parameter CFG_DEV_ID         = 16'h8179,
+  parameter CFG_DEV_ID         = 16'h8168,
   parameter CFG_VEND_ID        = 16'h10EC,
 
-  parameter CLASS_CODE         = 24'h028000,
+  parameter CLASS_CODE         = 24'h020000,
 
-  parameter CFG_REV_ID         = 8'h01,
+  parameter CFG_REV_ID         = 8'h15,
 
   parameter [7:0]   HEADER_TYPE = 8'h00,
 
-  parameter CFG_SUBSYS_ID      = 16'h8179,
-  parameter CFG_SUBSYS_VEND_ID = 16'h17AA,
+  parameter CFG_SUBSYS_ID      = 8'h390B,
+  parameter CFG_SUBSYS_VEND_ID = 8'h17AA,
 
   parameter         C_DATA_WIDTH = 64,
   parameter         EXT_PIPE_SIM = "FALSE",
@@ -26,18 +26,18 @@ module pcie_7x_0_core_top # (
   parameter [31:0]  BAR0 = 32'hFFFFFF01,
   parameter [31:0]  BAR1 = 32'h00000000,
   parameter [31:0]  BAR2 = 32'hFFFFF004,
-  parameter [31:0]  BAR3 = 32'hFFFC0004,
-  parameter [31:0]  BAR4 = 32'h00000000,
-  parameter [31:0]  BAR5 = 32'h00000000,
+  parameter [31:0]  BAR3 = 32'hFFFFFFFF,
+  parameter [31:0]  BAR4 = 32'hFFFC0004,
+  parameter [31:0]  BAR5 = 32'hFFFFFFFF,
 
   parameter [31:0]  CARDBUS_CIS_POINTER = 32'h00000000,
   parameter [31:0]  EXPANSION_ROM = 32'h00000000,
-  parameter [7:0]   INTERRUPT_PIN = 8'h1,
+  parameter [7:0]   INTERRUPT_PIN = 8'h01,
+  parameter [5:0]   EXT_CFG_CAP_PTR = 6'h00A,
+  parameter [9:0]   EXT_CFG_XP_CAP_PTR = 10'h00A,
 
-  parameter [5:0]   EXT_CFG_CAP_PTR = 6'h3F,
-  parameter [9:0]   EXT_CFG_XP_CAP_PTR = 10'h3FF,
-  
-  parameter         MPS_FORCE = "FALSE",
+  parameter         MPS_FORCE = "TRUE",
+
   //drvscan
   parameter         CPL_TIMEOUT_DISABLE_SUPPORTED = "TRUE",
   parameter [3:0]   CPL_TIMEOUT_RANGES_SUPPORTED = 4'h0,
@@ -51,7 +51,7 @@ module pcie_7x_0_core_top # (
   //PCIE CAP
   parameter         PCIE_CAP_ON = "TRUE",
   parameter [7:0]   PCIE_BASE_PTR = 8'h70,
-  parameter [7:0]   PCIE_CAP_NEXTPTR = 8'h00,
+  parameter [7:0]   PCIE_CAP_NEXTPTR = 8'hB0,
 
   //MSI CAP
   parameter         MSI_CAP_ON = "TRUE",
@@ -59,9 +59,9 @@ module pcie_7x_0_core_top # (
   parameter [7:0]   MSI_CAP_NEXTPTR = 8'h70,
 
   //MSIX CAP
-  parameter         MSIX_CAP_ON = "FALSE",
+  parameter         MSIX_CAP_ON = "TRUE",
   parameter [7:0]   MSIX_BASE_PTR = 8'hB0,
-  parameter [7:0]   MSIX_CAP_NEXTPTR =8'hD0,
+  parameter [7:0]   MSIX_CAP_NEXTPTR =88'h00,
 
   //PM CAP
   parameter         PM_CAP_ON = "TRUE",
@@ -74,19 +74,19 @@ module pcie_7x_0_core_top # (
   parameter [11:0]  RBAR_CAP_NEXTPTR = 12'h000,
 
   //VC CAP
-  parameter         VC_CAP_ON = "FALSE",
-  parameter [11:0]  VC_BASE_PTR = 12'h140,
-  parameter [11:0]  VC_CAP_NEXTPTR = 12'h160,
+  parameter         VC_CAP_ON = "TRUE",
+  parameter [11:0]  VC_BASE_PTR = 8'h140,
+  parameter [11:0]  VC_CAP_NEXTPTR = 8'h160,
 
   //DSN CAP
   parameter         DSN_CAP_ON = "TRUE",
-  parameter [11:0]  DSN_BASE_PTR = 12'h140,
-  parameter [11:0]  DSN_CAP_NEXTPTR = 12'h000,
+  parameter [11:0]  DSN_BASE_PTR = 8'h160,
+  parameter [11:0]  DSN_CAP_NEXTPTR = 8'h170,
 
   //AER CAP
   parameter         AER_CAP_ON = "TRUE",
-  parameter [11:0]  AER_BASE_PTR = 12'h100,
-  parameter [11:0]  AER_CAP_NEXTPTR = 12'h140,
+  parameter [11:0]  AER_BASE_PTR = 8'h100,
+  parameter [11:0]  AER_CAP_NEXTPTR = 8'h140,
 
   //VSEC CAP
   parameter         VSEC_CAP_ON = "FALSE",
@@ -99,7 +99,7 @@ module pcie_7x_0_core_top # (
   //parameter         PM_CAP_ON = "TRUE",
   //parameter [7:0]   PM_BASE_PTR = 8'h40,
   //parameter [7:0]   PM_CAP_NEXTPTR = 8'h48,
-  parameter         PM_CAP_VERSION = 3,  
+  parameter         PM_CAP_VERSION = 3,
   parameter         PM_CAP_PME_CLOCK = "FALSE",
   parameter         PM_CAP_AUXCURRENT = 7,
   parameter         PM_CAP_D1SUPPORT = "TRUE",
@@ -251,7 +251,7 @@ module pcie_7x_0_core_top # (
   //parameter [7:0]   MSIX_CAP_NEXTPTR =8'h00,
   parameter [7:0]   MSIX_CAP_ID = 8'h11,
   parameter         MSIX_CAP_PBA_BIR = 4,
-  parameter [28:0]  MSIX_CAP_PBA_OFFSET = 29'h00000100,
+  parameter [28:0]  MSIX_CAP_PBA_OFFSET = 00029'h100,
   parameter         MSIX_CAP_TABLE_BIR = 4,
   parameter [28:0]  MSIX_CAP_TABLE_OFFSET = 29'h0,
   parameter [10:0]  MSIX_CAP_TABLE_SIZE = 11'h003,
@@ -261,11 +261,11 @@ module pcie_7x_0_core_top # (
   //parameter         AER_CAP_ON = "FALSE",
   //parameter [11:0]  AER_BASE_PTR = 12'h000,
   //parameter [11:0]  AER_CAP_NEXTPTR = 12'h000,
-  parameter [15:0]  AER_CAP_ID = 16'h0001,
-  parameter [3:0]   AER_CAP_VERSION = 4'h1,
+  parameter [15:0]  AER_CAP_ID = 16'h001,
+  parameter [3:0]   AER_CAP_VERSION = 4'h2,
   //CONTROL
   parameter         AER_CAP_ECRC_CHECK_CAPABLE = "TRUE",
-  parameter         AER_CAP_ECRC_GEN_CAPABLE = "FALSE",
+  parameter         AER_CAP_ECRC_GEN_CAPABLE = "TRUE",
   //UNDEFINED
   parameter         AER_CAP_MULTIHEADER = "FALSE",
   parameter [23:0]  AER_CAP_OPTIONAL_ERR_SUPPORT = 24'h000000,
@@ -277,16 +277,16 @@ module pcie_7x_0_core_top # (
   //parameter         VC_CAP_ON = "FALSE",
   //parameter [11:0]  VC_BASE_PTR = 12'h000,
   //parameter [11:0]  VC_CAP_NEXTPTR = 12'h000,
-  parameter [15:0]  VC_CAP_ID = 16'h0002,
+  parameter [15:0]  VC_CAP_ID = 16'h002,
   parameter [3:0]   VC_CAP_VERSION = 4'h1,
   //VC Resource Capability Register 0
-  parameter         VC_CAP_REJECT_SNOOP_TRANSACTIONS = "FALSE",  
+  parameter         VC_CAP_REJECT_SNOOP_TRANSACTIONS = "FALSE",
 
   //DSN CAP
   //parameter         DSN_CAP_ON = "TRUE",
   //parameter [11:0]  DSN_BASE_PTR = 12'h100,
   //parameter [11:0]  DSN_CAP_NEXTPTR = 12'h10c,
-  parameter [15:0]  DSN_CAP_ID = 16'h0003,  
+  parameter [15:0]  DSN_CAP_ID = 16'h003,
   parameter [3:0]   DSN_CAP_VERSION = 4'h1,
 
 
